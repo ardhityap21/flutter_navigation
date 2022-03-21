@@ -1,62 +1,51 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(const HeroApp());
-
-class HeroApp extends StatelessWidget {
-  const HeroApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'Transition Demo',
-      home: MainScreen(),
-    );
-  }
+void main() {
+  runApp(const MaterialApp(
+    title: 'Navigation Basics',
+    home: FirstRoute(),
+  ));
 }
 
-class MainScreen extends StatelessWidget {
-  const MainScreen({Key? key}) : super(key: key);
+class FirstRoute extends StatelessWidget {
+  const FirstRoute({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Main Screen'),
+        title: const Text('First Route'),
       ),
-      body: GestureDetector(
-        onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) {
-            return const DetailScreen();
-          }));
-        },
-        child: Hero(
-          tag: 'imageHero',
-          child: Image.network(
-            'https://picsum.photos/250?image=9',
-          ),
+      body: Center(
+        child: ElevatedButton(
+          child: const Text('Open route'),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SecondRoute()),
+            );
+          },
         ),
       ),
     );
   }
 }
 
-class DetailScreen extends StatelessWidget {
-  const DetailScreen({Key? key}) : super(key: key);
+class SecondRoute extends StatelessWidget {
+  const SecondRoute({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GestureDetector(
-        onTap: () {
-          Navigator.pop(context);
-        },
-        child: Center(
-          child: Hero(
-            tag: 'imageHero',
-            child: Image.network(
-              'https://picsum.photos/250?image=9',
-            ),
-          ),
+      appBar: AppBar(
+        title: const Text('Second Route'),
+      ),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: const Text('Go back!'),
         ),
       ),
     );
