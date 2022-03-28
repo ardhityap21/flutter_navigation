@@ -1,86 +1,62 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
 
-Future<Album> fetchAlbum() async {
-  final response = await http
-      .get(Uri.parse('https://jsonplaceholder.typicode.com/albums/1'));
+import 'package:scrolling/main.dart';
 
-  if (response.statusCode == 200) {
-    return Album.fromJson(jsonDecode(response.body));
-  } else {
-    throw Exception('Failed to load album');
-  }
-}
+void main() {
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized()
+      as IntegrationTestWidgetsFlutterBinding;
 
-class Album {
-  final int userId;
-  final int id;
-  final String title;
-
-  const Album({
-    required this.userId,
-    required this.id,
-    required this.title,
-  });
-
-  factory Album.fromJson(Map<String, dynamic> json) {
-    return Album(
-      userId: json['userId'],
-      id: json['id'],
-      title: json['title'],
-    );
-  }
-}
-
-void main() => runApp(const MyApp(
-      todos: [],
+  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(MyApp(
+      items: List<String>.generate(10000, (i) => "Item $i"),
     ));
 
-class MyApp extends StatefulWidget {
-  const MyApp({Key? key, required List todos}) : super(key: key);
+    final listFinder = find.byType(Scrollable);
+    final itemFinder = find.byKey(const ValueKey('item_50_text'));
 
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  late Future<Album> futureAlbum;
-
-  @override
-  void initState() {
-    super.initState();
-    futureAlbum = fetchAlbum();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Fetch Data Example',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Fetch Data Example'),
-        ),
-        body: Center(
-          child: FutureBuilder<Album>(
-            future: futureAlbum,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return Text(snapshot.data!.title);
-              } else if (snapshot.hasError) {
-                return Text('${snapshot.error}');
-              }
-
-              return const CircularProgressIndicator();
-            },
-          ),
-        ),
-      ),
+    await binding.traceAction(
+      () async {
+        // Scroll until the item to be found appears.
+        await tester.scrollUntilVisible(
+          itemFinder,
+          500.0,
+          scrollable: listFinder,
+        );
+      },
+      reportKey: 'scrolling_timeline',
     );
-  }
+  });
+}
+test_driver/perf_driver.dart
+
+content_copy
+import 'package:integration_test/integration_test_driver.dart';
+import 'package:flutter_driver/flutter_driver.dart' as driver;
+
+Future<void> main() {
+  return integrationDriver(
+    responseDataCallback: (data) async {
+      if (data != null) {
+        final timeline = driver.Timeline.fromJson(data['scrolling_timeline']);
+
+        // Convert the Timeline into a TimelineSummary that's easier to
+        // read and understand.
+        final summary = driver.TimelineSummary.summarize(timeline);
+
+        // Then, write the entire timeline to disk in a json format.
+        // This file can be opened in the Chrome browser's tracing tools
+        // found by navigating to chrome://tracing.
+        // Optionally, save the summary to disk by setting includeSummary
+        // to true
+        await summary.writeTimelineToFile(
+          'scrolling_timeline',
+          pretty: true,
+          includeSummary: true,
+        );
+      }
+    },
+  );
 }
